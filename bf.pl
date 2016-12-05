@@ -9,6 +9,7 @@ use feature "say";
 use File::Slurp "read_file";
 
 my $debug = 0;
+$|++;
 
 my $input_archivo = $ARGV[0]
   || die 'error: no se paso un archivo en la entrada';
@@ -23,6 +24,7 @@ my $PUNTERO_TAPE    = 0;
 my $codigo_posicion = 0;
 my $old_pos_code;
 my @RESULTADO = ();
+my %shitcorch;
 
 ######################################################################
 # MAIN LOOP THINGY
@@ -39,20 +41,30 @@ my $hacer_para = {
 };
 
 while ( $codigo_posicion <= $#CODE + 1 ) {
+    my $mod_256 = $TAPE[$PUNTERO_TAPE] % 256;
+    $TAPE[$PUNTERO_TAPE] = $mod_256;
+
     defined $hacer_para->{ $CODE[$codigo_posicion] }
       && $hacer_para->{ $CODE[$codigo_posicion] }->();
+
     say "código: $CODE[$codigo_posicion]"   if $debug;
     say "posicion codigo: $codigo_posicion"  if $debug;
     say "TAPE pos: $PUNTERO_TAPE"            if $debug;
     say "CURRENT TAPE: $TAPE[$PUNTERO_TAPE]" if $debug;
     say "-----------"                        if $debug;
+    
     if ( $CODE[$codigo_posicion] eq ']' ) {
-
-    #$codigo_posicion =i buscar_code_patras ('[') if ($TAPE[PUNTERO_TAPE]) != 0;
         $codigo_posicion = $old_pos_code if ( $TAPE[$PUNTERO_TAPE] != 0 );
     }
+    
+    #die "TAPE es menor a 0 " if ( $TAPE[$PUNTERO_TAPE] < 0 );
     $codigo_posicion++;
     select( undef, undef, undef, 0.2 ) if $debug;
+    #if ($#TAPE >= 100){
+        #warn "too much";
+        #last;
+    #}
+
 }
 
 print Dumper(@TAPE) if $debug;
@@ -74,8 +86,7 @@ sub mv_cbz_der {
 }
 
 sub mv_cbz_izq {
-    die "Buffer error" if ( $PUNTERO_TAPE < 0 );
-    $PUNTERO_TAPE--;
+    $PUNTERO_TAPE-- unless ( $PUNTERO_TAPE < 0 );
     return 1;
 }
 
@@ -87,11 +98,10 @@ sub puntero_pp {
 sub puntero_mm {
     $TAPE[$PUNTERO_TAPE]--;
     return 1;
-
 }
 
 sub print_puntero {
-    push( @RESULTADO, chr( $TAPE[$PUNTERO_TAPE] ) );
+    push( @RESULTADO, $TAPE[$PUNTERO_TAPE]);
     return 1;
 }
 
@@ -118,12 +128,15 @@ sub loop_start {
 }
 
 sub buscar_code {
+    say "LOOPEANDO: en index $codigo_posicion " if $debug;
     my $num_corch            = 1;
     my $actual_posicion_code = $codigo_posicion;
+            $shitcorch{$num_corch} = $actual_posicion_code;
     $actual_posicion_code++;
     while (1) {
         if ( $CODE[$actual_posicion_code] eq '[' ) {
             $num_corch++;
+            $shitcorch{$num_corch} = $actual_posicion_code;
         }
         if ( $CODE[$actual_posicion_code] eq ']' && $num_corch == 1 ) {
             last;
@@ -134,6 +147,7 @@ sub buscar_code {
     }
     $actual_posicion_code++;
     say "SALTO: $actual_posicion_code" if $debug;
+    print Dumper(%shitcorch) if $debug;
     return $actual_posicion_code;
 }
 
