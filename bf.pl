@@ -42,7 +42,6 @@ my $hacer_para = {
     '.' => \&print_puntero, 
     ',' => \&replace_puntero, 
     '[' => \&loop_start, 
-    #']' => \&loop_start, 
 };
 
 while ( $codigo_posicion <= $#CODE + 1 ) {
@@ -64,13 +63,8 @@ while ( $codigo_posicion <= $#CODE + 1 ) {
         $codigo_posicion = $old_pos_code if ( $TAPE[$PUNTERO_TAPE] != 0 );
     }
     
-    #die "TAPE es menor a 0 " if ( $TAPE[$PUNTERO_TAPE] < 0 );
     $codigo_posicion++;
     select( undef, undef, undef, 0.2 ) if $debug;
-    #if ($#TAPE >= 100){
-        #warn "too much";
-        #last;
-    #}
 
 }
 
@@ -86,9 +80,7 @@ exit;
 ######################################################################
 sub mv_cbz_der {
     $PUNTERO_TAPE++;
-    $TAPE[$PUNTERO_TAPE] = 0
-      unless ( exists( $TAPE[$PUNTERO_TAPE] ) )
-      ;    # crear nuevo elemento si es necesario
+    $TAPE[$PUNTERO_TAPE] = 0 unless ( exists( $TAPE[$PUNTERO_TAPE] ) );
     return 1;
 }
 
@@ -117,7 +109,6 @@ sub print_puntero {
 sub replace_puntero {
     my $innie = ord($INPUTOS[$INPUTOS_PUNTERO]);
     $INPUTOS_PUNTERO++;
-    #my $innie = getch();
     if ($innie) {
         $TAPE[$PUNTERO_TAPE] = $innie;
         return 1;
@@ -134,7 +125,6 @@ sub loop_start {
 }
 
 sub buscar_code {
-    #say "LOOPEANDO: en index $codigo_posicion " if $debug;
     my $num_corch            = 1;
     my $actual_posicion_code = $codigo_posicion;
             $shitcorch{$num_corch} = $actual_posicion_code;
@@ -142,7 +132,6 @@ sub buscar_code {
     while (1) {
         if ( $CODE[$actual_posicion_code] eq '[' ) {
             $num_corch++;
-            #$shitcorch{$num_corch} = $actual_posicion_code;
         }
         if ( $CODE[$actual_posicion_code] eq ']' && $num_corch == 1 ) {
             last;
@@ -152,13 +141,11 @@ sub buscar_code {
         $actual_posicion_code++;
     }
     $actual_posicion_code++;
-    say "SALTO: $actual_posicion_code" if $debug;
-    #print Dumper(%shitcorch) if $debug;
     return $actual_posicion_code;
 }
 
 __DATA__
-
+Referencias (gracias esolang!).
 
 > 	increment the data pointer (to point to the next cell to the right).
 < 	decrement the data pointer (to point to the next cell to the left).
@@ -168,6 +155,5 @@ __DATA__
 , 	accept one byte of input, storing its value in the byte at the data pointer.
 [ 	if the byte at the data pointer is zero, then instead of moving the instruction pointer forward to the next command, jump it forward to the command after the matching ] command.
 ] 	if the byte at the data pointer is nonzero, then instead of moving the instruction pointer forward to the next command, jump it back to the command after the matching [ command.
-
 
 
