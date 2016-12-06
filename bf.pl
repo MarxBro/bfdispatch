@@ -8,7 +8,7 @@ use Data::Dumper "Dumper";
 use feature "say";
 use File::Slurp "read_file";
 
-my $debug = 0;
+my $debug = 1;
 $|++;
 
 my $input_archivo = $ARGV[0]
@@ -25,6 +25,11 @@ my $codigo_posicion = 0;
 my $old_pos_code;
 my @RESULTADO = ();
 my %shitcorch;
+
+my $inputo = $ARGV[1] || " ";
+my @INPUTOS = split("",$inputo);
+my $INPUTOS_PUNTERO = 0;
+
 
 ######################################################################
 # MAIN LOOP THINGY
@@ -43,6 +48,8 @@ my $hacer_para = {
 while ( $codigo_posicion <= $#CODE + 1 ) {
     my $mod_256 = $TAPE[$PUNTERO_TAPE] % 256;
     $TAPE[$PUNTERO_TAPE] = $mod_256;
+    my $espacio = $PUNTERO_TAPE % 4000;
+    $PUNTERO_TAPE = $espacio;
 
     defined $hacer_para->{ $CODE[$codigo_posicion] }
       && $hacer_para->{ $CODE[$codigo_posicion] }->();
@@ -68,8 +75,8 @@ while ( $codigo_posicion <= $#CODE + 1 ) {
 }
 
 print Dumper(@TAPE) if $debug;
-print Dumper(@RESULTADO);
-#say $RESULTADO;
+print join('',@RESULTADO);
+say "----";
 exit;
 
 
@@ -101,21 +108,20 @@ sub puntero_mm {
 }
 
 sub print_puntero {
-    push( @RESULTADO, $TAPE[$PUNTERO_TAPE]);
+    use bytes;
+    push( @RESULTADO, chr($TAPE[$PUNTERO_TAPE]));
+    no bytes;
     return 1;
 }
 
 sub replace_puntero {
-    my $innie = ord(<>);
+    my $innie = ord($INPUTOS[$INPUTOS_PUNTERO]);
+    $INPUTOS_PUNTERO++;
     #my $innie = getch();
     if ($innie) {
         $TAPE[$PUNTERO_TAPE] = $innie;
         return 1;
     }
-    else {
-        return 0;
-    }
-    return 1;
 }
 
 # Loops
@@ -128,7 +134,7 @@ sub loop_start {
 }
 
 sub buscar_code {
-    say "LOOPEANDO: en index $codigo_posicion " if $debug;
+    #say "LOOPEANDO: en index $codigo_posicion " if $debug;
     my $num_corch            = 1;
     my $actual_posicion_code = $codigo_posicion;
             $shitcorch{$num_corch} = $actual_posicion_code;
@@ -136,7 +142,7 @@ sub buscar_code {
     while (1) {
         if ( $CODE[$actual_posicion_code] eq '[' ) {
             $num_corch++;
-            $shitcorch{$num_corch} = $actual_posicion_code;
+            #$shitcorch{$num_corch} = $actual_posicion_code;
         }
         if ( $CODE[$actual_posicion_code] eq ']' && $num_corch == 1 ) {
             last;
@@ -147,7 +153,7 @@ sub buscar_code {
     }
     $actual_posicion_code++;
     say "SALTO: $actual_posicion_code" if $debug;
-    print Dumper(%shitcorch) if $debug;
+    #print Dumper(%shitcorch) if $debug;
     return $actual_posicion_code;
 }
 
@@ -162,3 +168,6 @@ __DATA__
 , 	accept one byte of input, storing its value in the byte at the data pointer.
 [ 	if the byte at the data pointer is zero, then instead of moving the instruction pointer forward to the next command, jump it forward to the command after the matching ] command.
 ] 	if the byte at the data pointer is nonzero, then instead of moving the instruction pointer forward to the next command, jump it back to the command after the matching [ command.
+
+
+
